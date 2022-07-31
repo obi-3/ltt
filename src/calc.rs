@@ -4,17 +4,10 @@ use parse::*;
 
 pub fn do_calc(str: String) {
     let fstr = format_string(str);
-    let lexer = Lexer::new(fstr.clone());
-    let mut parser = Parser::new(lexer.clone());
+    let lexer = Lexer::new(fstr);
+    let mut parser = Parser::new(lexer);
     let root = parser.parse();
-    //println!("lexer is {:?}", parser.lexer);
-    // let root: Option<Box<Tree>> = parser.parse();
-    //println!("{:?}", root);
-    // let mut vec: Vec<Vec<i32>> = Vec::new();
 
-    // let (n, r) = (2, 5);
-    // let mut buf = vec![0; r];
-    // dfs(&mut buf, 0, 0, n);
     let n = parser.lexer.vnum as usize;
     let mut vec: Vec<bool> = vec![true; n];
     let mut vvec: Vec<Vec<bool>> = Vec::new();
@@ -27,28 +20,16 @@ pub fn do_calc(str: String) {
     println!("||f|");
 
     for v in vvec {
-        let mut cnt = 0;
-        for belm in v.clone() {
-            let elm;
-            if belm {
-                elm = 1;
-            } else {
-                elm = 0;
-            }
+        for (cnt, belm) in v.clone().into_iter().enumerate() {
+            let elm = if belm { 1 } else { 0 };
             print!("|");
             for _i in 1..tmp.vars[cnt].len() {
                 print!(" ");
             }
             print!("{}", elm);
-            cnt += 1;
         }
         let ret = calc(v, root.clone()).expect("Null Expression");
-        let f;
-        if ret {
-            f = 1;
-        } else {
-            f = 0;
-        }
+        let f = if ret { 1 } else { 0 };
         println!("||{}|", f);
     }
 
@@ -75,13 +56,13 @@ fn calc(vec: Vec<bool>, root: Option<Box<Tree>>) -> Option<bool> {
             Var(var) => Some(vec[var.id as usize]),
             True => Some(true),
             False => Some(false),
-            Op(Operator::Not) => not(calc(vec.clone(), root.left)),
-            Op(Operator::Or) => or(calc(vec.clone(), root.left), calc(vec.clone(), root.right)),
-            Op(Operator::Nor) => nor(calc(vec.clone(), root.left), calc(vec.clone(), root.right)),
-            Op(Operator::Xor) => xor(calc(vec.clone(), root.left), calc(vec.clone(), root.right)),
-            Op(Operator::And) => and(calc(vec.clone(), root.left), calc(vec.clone(), root.right)),
-            Op(Operator::Nand) => nand(calc(vec.clone(), root.left), calc(vec.clone(), root.right)),
-            Op(Operator::Is) => is(calc(vec.clone(), root.left), calc(vec.clone(), root.right)),
+            Op(Operator::Not) => not(calc(vec, root.left)),
+            Op(Operator::Or) => or(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Operator::Nor) => nor(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Operator::Xor) => xor(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Operator::And) => and(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Operator::Nand) => nand(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Operator::Is) => is(calc(vec.clone(), root.left), calc(vec, root.right)),
             _ => None,
         },
     }

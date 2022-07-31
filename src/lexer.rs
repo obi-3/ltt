@@ -31,14 +31,14 @@ type Charkind = u8;
 fn match_charkind(c: char) -> Charkind {
     if c.is_uppercase() || c.is_numeric() {
         return 0;
-    };
+    }
     if c.is_lowercase() {
         return 1;
     };
     match c {
         //一文字で有意なもの
-        '(' | ')' | '~' | '!' => return 2,
-        _ => return 3,
+        '(' | ')' | '~' | '!' => 2,
+        _ => 3,
     }
 }
 
@@ -68,8 +68,7 @@ pub fn format_string(str: String) -> Vec<String> {
         index += 1;
         prev = match_charkind(c);
     }
-    //println!("strs is {:?}", strs);
-    return strs;
+    strs
 }
 #[derive(Debug, Clone)]
 pub struct Lexer {
@@ -127,12 +126,11 @@ impl Lexer {
             }
         }
         //println!("{:?}", token);
-        match token {
-            Token::Error => panic!("Lexer Error!"),
-            _ => {}
-        };
+        if token == Token::Error {
+            panic!("Lexer Error")
+        }
         self.position += 1;
-        return token;
+        token
     }
 }
 

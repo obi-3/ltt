@@ -9,8 +9,8 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 {
         let mut str: String = String::new();
-        for i in 1..args.len() {
-            str.push_str(&args[i]);
+        for item in args.iter().skip(1) {
+            str.push_str(item);
         }
         do_calc(str);
     } else {
@@ -22,7 +22,6 @@ fn main() {
             let mut code = String::new();
             io::stdin()
                 .read_line(&mut code)
-                .ok()
                 .expect("failed to read line");
 
             if code == "\n" {

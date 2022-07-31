@@ -52,20 +52,18 @@ impl Parser {
     // }
 
     pub fn parse(&mut self) -> Option<Box<Tree>> {
-        let root: Option<Box<Tree>>;
-        root = self.eval_expr();
+        let root: Option<Box<Tree>> = self.eval_expr();
 
         if self.curr_token == Token::End {
             // println!("{:?}", root);
-            return root;
+            root
         } else {
             panic!("Parse Error");
         }
     }
 
     fn eval_expr(&mut self) -> Option<Box<Tree>> {
-        let mut root: Option<Box<Tree>>;
-        root = self.eval_term();
+        let mut root: Option<Box<Tree>> = self.eval_term();
 
         match self.curr_token {
             Token::Op(Operator::Or) | Token::Op(Operator::Nor) | Token::Op(Operator::Xor) => {
@@ -80,12 +78,11 @@ impl Parser {
             _ => {}
         }
 
-        return root;
+        root
     }
 
     fn eval_term(&mut self) -> Option<Box<Tree>> {
-        let mut root: Option<Box<Tree>>;
-        root = self.eval_factor();
+        let mut root: Option<Box<Tree>> = self.eval_factor();
 
         match self.curr_token {
             Token::Op(Operator::And) | Token::Op(Operator::Nand) | Token::Op(Operator::Is) => {
@@ -100,7 +97,7 @@ impl Parser {
             _ => {}
         }
 
-        return root;
+        root
     }
 
     fn eval_factor(&mut self) -> Option<Box<Tree>> {
@@ -119,7 +116,7 @@ impl Parser {
             _ => root = self.eval_primary(),
         }
 
-        return root;
+        root
     }
 
     fn eval_primary(&mut self) -> Option<Box<Tree>> {
@@ -155,7 +152,7 @@ impl Parser {
             _ => panic!("Parse Error"),
         }
 
-        return root;
+        root
     }
 }
 
