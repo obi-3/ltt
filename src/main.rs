@@ -7,6 +7,7 @@ use std::io::{self, Write};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+
     if args.len() > 1 {
         let mut str: String = String::new();
         for item in args.iter().skip(1) {
@@ -24,15 +25,13 @@ fn main() {
                 .read_line(&mut code)
                 .expect("failed to read line");
 
-            if code == "\n" {
-                continue;
-            }
-
-            if code == "help\n" {
-                println!("変数名 -> [A-Z] もしくは [A-Z]+[0-9] (ex: X  や Y1)");
-            }
-            if code == "exit\n" {
-                break;
+            match code.as_str() {
+                "\n" => continue,
+                "exit\n" => break,
+                "help\n" => {
+                    println!("変数名 -> [A-Z] もしくは [A-Z]+[0-9] (ex: X  や Y1)");
+                }
+                _ => {}
             }
 
             do_calc(code);

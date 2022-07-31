@@ -55,7 +55,6 @@ impl Parser {
         let root: Option<Box<Tree>> = self.eval_expr();
 
         if self.curr_token == Token::End {
-            // println!("{:?}", root);
             root
         } else {
             panic!("Parse Error");
