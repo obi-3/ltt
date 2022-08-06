@@ -28,7 +28,7 @@ pub enum Token {
 }
 
 type Charkind = u8;
-fn match_charkind(c: char) -> Charkind {
+fn match_charkind(&c: &char) -> Charkind {
     if c.is_uppercase() || c.is_numeric() {
         return 0;
     }
@@ -43,33 +43,39 @@ fn match_charkind(c: char) -> Charkind {
 }
 
 pub fn format_string(str: String) -> Vec<String> {
-    let s: String = str.split_ascii_whitespace().collect();
-    //println!("s is {:?}", s);
-    let cs: Vec<char> = s.chars().collect();
+    let cs: Vec<char> = str
+        .split_ascii_whitespace()
+        .collect::<String>()
+        .chars()
+        .collect();
 
-    let mut index: usize = 0;
     let mut num: usize = 0;
     let mut strs: Vec<String> = Vec::new();
 
-    let mut prev = match_charkind(cs[index]);
+    let mut prev = match_charkind(&cs[0]);
     strs.push(String::new());
-    strs[num].push(cs[index]);
-    index += 1;
+    strs[num].push(cs[0]);
 
-    while index < cs.len() {
-        let c = cs[index];
-        if prev != 2 && prev == match_charkind(c) {
+    for c in cs.into_iter().skip(1) {
+        if prev != 2 && prev == match_charkind(&c) {
             strs[num].push(c);
         } else {
             num += 1;
             strs.push(String::new());
             strs[num].push(c);
         }
-        index += 1;
-        prev = match_charkind(c);
+        prev = match_charkind(&c);
     }
     strs
 }
+
+#[test]
+fn format_test() {
+    let str = "!((X) is Y)".to_string();
+    let ret = format_string(str);
+    assert_eq!(ret, ["!", "(", "(", "X", ")", "is", "Y", ")"]);
+}
+
 #[derive(Debug, Clone)]
 pub struct Lexer {
     pub strs: Vec<String>,
@@ -125,10 +131,7 @@ impl Lexer {
                 }
             }
         }
-        //println!("{:?}", token);
-        if token == Token::Error {
-            panic!("Lexer Error")
-        }
+
         self.position += 1;
         token
     }
