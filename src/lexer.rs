@@ -85,9 +85,9 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn new(strs: Vec<String>) -> Lexer {
+    pub fn new(str: String) -> Lexer {
         Lexer {
-            strs,
+            strs: format_string(str),
             position: 0,
             vars: Vec::new(),
             vnum: 0,

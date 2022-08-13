@@ -3,8 +3,7 @@ use lexer::*;
 use parse::*;
 
 pub fn do_calc(str: String) {
-    let fstr = format_string(str);
-    let lexer = Lexer::new(fstr);
+    let lexer = Lexer::new(str);
     let mut parser = Parser::new(lexer);
     let root = parser.parse();
 
@@ -49,6 +48,7 @@ fn rec(vvec: &mut Vec<Vec<bool>>, vec: &mut Vec<bool>, n: usize, len: usize) {
 }
 
 fn calc(vec: Vec<bool>, root: Option<Box<Tree>>) -> Option<bool> {
+    use Operator::*;
     use Token::*;
     match root {
         None => None,
@@ -56,13 +56,13 @@ fn calc(vec: Vec<bool>, root: Option<Box<Tree>>) -> Option<bool> {
             Var(var) => Some(vec[var.id as usize]),
             True => Some(true),
             False => Some(false),
-            Op(Operator::Not) => not(calc(vec, root.left)),
-            Op(Operator::Or) => or(calc(vec.clone(), root.left), calc(vec, root.right)),
-            Op(Operator::Nor) => nor(calc(vec.clone(), root.left), calc(vec, root.right)),
-            Op(Operator::Xor) => xor(calc(vec.clone(), root.left), calc(vec, root.right)),
-            Op(Operator::And) => and(calc(vec.clone(), root.left), calc(vec, root.right)),
-            Op(Operator::Nand) => nand(calc(vec.clone(), root.left), calc(vec, root.right)),
-            Op(Operator::Is) => is(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Not) => not(calc(vec, root.left)),
+            Op(Or) => or(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Nor) => nor(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Xor) => xor(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(And) => and(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Nand) => nand(calc(vec.clone(), root.left), calc(vec, root.right)),
+            Op(Is) => is(calc(vec.clone(), root.left), calc(vec, root.right)),
             _ => None,
         },
     }
