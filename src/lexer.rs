@@ -1,10 +1,4 @@
 #[derive(Debug, Clone, PartialEq)]
-pub struct Variable {
-    pub name: String,
-    pub id: i32,
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub enum Operator {
     And,
     Nand,
@@ -17,7 +11,7 @@ pub enum Operator {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    Var(Variable),
+    Var(String, i32),
     Op(Operator),
     True,
     False,
@@ -29,13 +23,9 @@ pub enum Token {
 
 type Charkind = u8;
 fn match_charkind(&c: &char) -> Charkind {
-    if c.is_uppercase() || c.is_numeric() {
-        return 0;
-    }
-    if c.is_lowercase() {
-        return 1;
-    };
     match c {
+        'a'..='z' => 0,
+        'A'..='Z' | '0'..='9' => 1,
         //一文字で有意なもの
         '(' | ')' | '~' | '!' => 2,
         _ => 3,
@@ -49,20 +39,20 @@ pub fn format_string(str: String) -> Vec<String> {
         .chars()
         .collect();
 
-    let mut num: usize = 0;
+    let mut index: usize = 0;
     let mut strs: Vec<String> = Vec::new();
 
     let mut prev = match_charkind(&cs[0]);
     strs.push(String::new());
-    strs[num].push(cs[0]);
+    strs[index].push(cs[0]);
 
     for c in cs.into_iter().skip(1) {
         if prev != 2 && prev == match_charkind(&c) {
-            strs[num].push(c);
+            strs[index].push(c);
         } else {
-            num += 1;
+            index += 1;
             strs.push(String::new());
-            strs[num].push(c);
+            strs[index].push(c);
         }
         prev = match_charkind(&c);
     }
@@ -94,56 +84,41 @@ impl Lexer {
         }
     }
     pub fn get_token(&mut self) -> Token {
+        use Operator::*;
+        use Token::*;
+
         if self.position == self.strs.len() {
             return Token::End;
         }
-        let str = self.strs[self.position].clone();
-        let mut token = Token::Error;
-        match str.as_str() {
-            "(" => token = Token::Lpar,
-            ")" => token = Token::Rpar,
-            "TRUE" | "1" => token = Token::True,
-            "FALSE" | "0" => token = Token::False,
-            "and" | "*" => token = Token::Op(Operator::And),
-            "nand" => token = Token::Op(Operator::Nand),
-            "or" | "+" => token = Token::Op(Operator::Or),
-            "nor" => token = Token::Op(Operator::Nor),
-            "xor" => token = Token::Op(Operator::Xor),
-            "is" | "->" => token = Token::Op(Operator::Is),
-            "~" | "!" => token = Token::Op(Operator::Not),
-            _ => {
+        let token = match self.strs[self.position].as_str() {
+            "(" => Lpar,
+            ")" => Rpar,
+            "TRUE" | "1" => True,
+            "FALSE" | "0" => False,
+            "and" | "*" => Op(And),
+            "nand" => Op(Nand),
+            "or" | "+" => Op(Or),
+            "nor" => Op(Nor),
+            "xor" => Op(Xor),
+            "is" | "->" => Op(Is),
+            "~" | "!" => Op(Not),
+            str => {
                 let mut same_flag = 0;
+                let mut tmp = Error;
                 if let Some(same_index) = self.vars.iter().position(|x| *x == str) {
-                    token = Token::Var(Variable {
-                        name: self.vars[same_index].clone(),
-                        id: same_index as i32,
-                    });
+                    tmp = Var(self.vars[same_index].clone(), same_index as i32);
                     same_flag = 1;
                 }
                 if same_flag == 0 {
-                    let var = Variable {
-                        name: str,
-                        id: self.vnum,
-                    };
-                    token = Token::Var(var.clone());
-                    self.vars.push(var.name);
+                    tmp = Var(str.to_string(), self.vnum);
+                    self.vars.push(str.to_string());
                     self.vnum += 1;
                 }
+                tmp
             }
-        }
+        };
 
         self.position += 1;
         token
     }
 }
-
-// pub fn test_lexer() {
-//     let str = "!(X and !Y1) * !(Y2 nor W)".to_string();
-//     println!("str is {:?}", str);
-//     let fstr = format_string(str);
-//     let mut lexer = Lexer::new(fstr.clone());
-//     for _i in 0..fstr.len() {
-//         println!("token -> {:?}", lexer.get_token());
-//     }
-//     println!("lexer is {:?}", lexer);
-// }

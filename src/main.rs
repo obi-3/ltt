@@ -13,19 +13,23 @@ fn main() {
         for item in args.iter().skip(1) {
             str.push_str(item);
         }
-        do_calc(str);
+
+        match make_truth_table(str) {
+            Ok(s) => println!("{s}"),
+            Err(why) => println!("{why}"),
+        }
     } else {
         println!("helpでヘルプを表示\nexitで終了");
         loop {
             print!(">> ");
             io::stdout().flush().unwrap();
 
-            let mut code = String::new();
+            let mut input = String::new();
             io::stdin()
-                .read_line(&mut code)
+                .read_line(&mut input)
                 .expect("failed to read line");
 
-            match code.as_str() {
+            match input.as_str() {
                 "\n" => continue,
                 "exit\n" => break,
                 "help\n" => {
@@ -33,8 +37,10 @@ fn main() {
                 }
                 _ => {}
             }
-
-            do_calc(code);
+            match make_truth_table(input) {
+                Ok(s) => println!("{s}"),
+                Err(why) => println!("{why}"),
+            }
         }
     }
 }

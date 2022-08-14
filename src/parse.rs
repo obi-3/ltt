@@ -1,7 +1,21 @@
-use core::panic;
-
 use crate::lexer;
 use lexer::*;
+use std::fmt;
+use Operator::*;
+use Token::*;
+
+#[derive(Debug, Clone)]
+pub struct ParseError {
+    pub message: String,
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl std::error::Error for ParseError {}
 
 #[derive(Debug, Clone)]
 pub struct Tree {
@@ -9,23 +23,6 @@ pub struct Tree {
     pub left: Option<Box<Tree>>,
     pub right: Option<Box<Tree>>,
 }
-
-// fn print_tree(root: Option<Box<Tree>>) {
-//     print_tree_n(0, root);
-// }
-// fn print_tree_n(n: i32, root: Option<Box<Tree>>) {
-//     match root {
-//         None => return,
-//         Some(root) => {
-//             print_tree_n(n + 1, root.left);
-//             for _i in 0..n {
-//                 print!("    ");
-//             }
-//             println!("{:?}", root.token);
-//             print_tree_n(n + 1, root.right);
-//         }
-//     }
-// }
 
 pub struct Parser {
     pub lexer: Lexer,
@@ -39,90 +36,80 @@ impl Parser {
         Parser { lexer, curr_token }
     }
 
-    // pub fn test_parse(&mut self) {
-    //     let root: Option<Box<Tree>>;
-    //     root = self.eval_expr();
-
-    //     if self.curr_token == Token::End {
-    //         // println!("{:?}", root);
-    //         print_tree(root);
-    //     } else {
-    //         panic!("Parse Error");
-    //     }
-    // }
-
-    pub fn parse(&mut self) -> Option<Box<Tree>> {
-        let root: Option<Box<Tree>> = self.eval_expr();
+    pub fn parse(&mut self) -> Result<Option<Box<Tree>>, ParseError> {
+        let root: Option<Box<Tree>> = self.eval_expr()?;
 
         if self.curr_token == Token::End {
-            root
+            Ok(root)
         } else {
-            panic!("Parse Error");
+            Err(ParseError {
+                message: "ParseError: Failed to create a parse tree.".to_string(),
+            })
         }
     }
 
-    fn eval_expr(&mut self) -> Option<Box<Tree>> {
-        let mut root: Option<Box<Tree>> = self.eval_term();
+    fn eval_expr(&mut self) -> Result<Option<Box<Tree>>, ParseError> {
+        let mut root: Option<Box<Tree>> = self.eval_term()?;
 
         match self.curr_token {
-            Token::Op(Operator::Or) | Token::Op(Operator::Nor) | Token::Op(Operator::Xor) => {
+            Op(Or) | Op(Nor) | Op(Xor) => {
                 let token: Token = self.curr_token.clone();
                 self.curr_token = self.lexer.get_token();
                 root = Some(Box::new(Tree {
                     token,
                     left: root,
-                    right: self.eval_expr(),
+                    right: self.eval_expr()?,
                 }));
             }
             _ => {}
         }
 
-        root
+        Ok(root)
     }
 
-    fn eval_term(&mut self) -> Option<Box<Tree>> {
-        let mut root: Option<Box<Tree>> = self.eval_factor();
+    fn eval_term(&mut self) -> Result<Option<Box<Tree>>, ParseError> {
+        let mut root: Option<Box<Tree>> = self.eval_factor()?;
 
         match self.curr_token {
-            Token::Op(Operator::And) | Token::Op(Operator::Nand) | Token::Op(Operator::Is) => {
+            Op(And) | Op(Nand) | Op(Is) => {
                 let token: Token = self.curr_token.clone();
                 self.curr_token = self.lexer.get_token();
                 root = Some(Box::new(Tree {
                     token,
                     left: root,
-                    right: self.eval_term(),
+                    right: self.eval_term()?,
                 }));
             }
             _ => {}
         }
 
-        root
+        Ok(root)
     }
 
-    fn eval_factor(&mut self) -> Option<Box<Tree>> {
+    fn eval_factor(&mut self) -> Result<Option<Box<Tree>>, ParseError> {
         let root: Option<Box<Tree>>;
 
         match self.curr_token {
-            Token::Op(Operator::Not) => {
+            Op(Not) => {
                 let token: Token = self.curr_token.clone();
                 self.curr_token = self.lexer.get_token();
                 root = Some(Box::new(Tree {
                     token,
-                    left: self.eval_primary(),
+                    left: self.eval_primary()?,
                     right: None,
                 }));
             }
-            _ => root = self.eval_primary(),
+            _ => root = self.eval_primary()?,
         }
 
-        root
+        Ok(root)
     }
 
-    fn eval_primary(&mut self) -> Option<Box<Tree>> {
+    fn eval_primary(&mut self) -> Result<Option<Box<Tree>>, ParseError> {
         let root: Option<Box<Tree>>;
 
         match self.curr_token.clone() {
-            Token::True | Token::False => {
+            True | False => {
                 let token = self.curr_token.clone();
                 self.curr_token = self.lexer.get_token();
                 root = Some(Box::new(Tree {
@@ -131,7 +118,7 @@ impl Parser {
                     right: None,
                 }));
             }
-            Token::Var(_) => {
+            Var(..) => {
                 let token: Token = self.curr_token.clone();
                 self.curr_token = self.lexer.get_token();
                 root = Some(Box::new(Tree {
@@ -140,26 +127,23 @@ impl Parser {
                     right: None,
                 }));
             }
-            Token::Lpar => {
+            Lpar => {
                 self.curr_token = self.lexer.get_token();
-                root = self.eval_expr();
+                root = self.eval_expr()?;
                 if self.curr_token != Token::Rpar {
-                    panic!("Parence Error");
+                    return Err(ParseError {
+                        message: "ParseError: Incorrect parenthese".to_string(),
+                    });
                 }
                 self.curr_token = self.lexer.get_token();
             }
-            _ => panic!("Parse Error"),
+            _ => {
+                return Err(ParseError {
+                    message: "ParseError: Unknown token".to_string(),
+                })
+            }
         }
 
-        root
+        Ok(root)
     }
 }
-
-// pub fn parse_test() {
-//     let str = "((X+Y))".to_string();
-//     let fstr = format_string(str.clone());
-//     let lexer = Lexer::new(fstr.clone());
-//     let mut parser = Parser::new(lexer.clone());
-//     println!("{:?}", lexer);
-//     parser.test_parse();
-// }
